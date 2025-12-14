@@ -33,6 +33,63 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
         if (args.length > 0) {
             Player target = null;
 
+            // === GIVE TO ALL ONLINE PLAYERS WITH "*" ===
+            if (args.length >= 2 && args[1].equals("*")) {
+
+                if (!sender.hasPermission("moneypouch.admin.giveall")) {
+                    sender.sendMessage(ChatColor.RED + "Nu ai permisiune pentru asta.");
+                    return true;
+                }
+
+                int amount = 1;
+                if (args.length >= 3) {
+                    try {
+                        amount = Integer.parseInt(args[2]);
+                        if (amount > 64) {
+                            sender.sendMessage(ChatColor.RED + "Warning: The amount requested is above 64. This may result in strange behaviour.");
+                        }
+                    } catch (NumberFormatException e) {
+                        sender.sendMessage(ChatColor.RED + "Invalid integer");
+                        return true;
+                    }
+                }
+
+                Pouch pouch = null;
+                for (Pouch p : plugin.getPouches()) {
+                    if (p.getId().equalsIgnoreCase(args[0])) {
+                        pouch = p;
+                        break;
+                    }
+                }
+
+                if (pouch == null) {
+                    sender.sendMessage(ChatColor.RED + "The pouch " + ChatColor.DARK_RED + args[0] + ChatColor.RED + " could not be found.");
+                    return true;
+                }
+
+                for (Player online : Bukkit.getOnlinePlayers()) {
+
+                    ItemStack stackToAdd = pouch.getItemStack().clone();
+                    stackToAdd.setAmount(amount);
+
+                    if (stackToAdd.getType() == Material.PLAYER_HEAD
+                            && plugin.getConfig().contains("pouches." + pouch.getId() + ".texture-url")) {
+
+                        String textureURL = plugin.getConfig().getString("pouches." + pouch.getId() + ".texture-url");
+                        stackToAdd = CustomHeadManager.getCustomSkull(textureURL);
+                        stackToAdd.setAmount(amount);
+                    }
+
+                    online.getInventory().addItem(stackToAdd);
+                }
+
+                sender.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.GIVE_ITEM)
+                        .replace("%player%", "everyone")
+                        .replace("%item%", pouch.getItemStack().getItemMeta().getDisplayName()));
+
+                return true;
+            }
+
             if (args.length >= 2) {
                 target = Bukkit.getPlayer(args[1]);
             } else if (sender instanceof Player) {

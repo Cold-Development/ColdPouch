@@ -18,6 +18,7 @@ import dev.padrewin.moneypouchdeluxe.Title.Title_Bukkit;
 import net.milkbowl.vault.economy.Economy;
 import org.apache.commons.lang.StringUtils;
 import org.black_ixx.playerpoints.PlayerPointsAPI;
+import dev.padrewin.coldbits.ColdBitsAPI;
 import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -27,6 +28,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,6 +52,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
     private ItemGetter itemGetter;
     private MenuController menuController;
     private PlayerPointsAPI playerPointsAPI;
+    private ColdBitsAPI coldBitsAPI;
     private static MoneyPouchDeluxe instance;
     private boolean pointsSetupDone = false;
     private boolean pointsHooked = false;
@@ -273,25 +276,29 @@ public class MoneyPouchDeluxe extends ColdPlugin {
             }
         }
 
-        if (Bukkit.getServer().getPluginManager().getPlugin("ColdBits") != null && Bukkit.getServer().getPluginManager().getPlugin("ColdBits").isEnabled()) {
-            if (getEconomyType("coldbits") == null) {
-                try {
-                    Class<?> coldBitsClass = Class.forName("dev.padrewin.coldbits.ColdBits");
-                    Object coldBitsInstance = coldBitsClass.getMethod("getInstance").invoke(null);
-                    Object api = coldBitsClass.getMethod("getAPI").invoke(coldBitsInstance);
+        if (!pointsHooked) {
+            Plugin plugin = Bukkit.getPluginManager().getPlugin("ColdBits");
 
-                    playerPointsAPI = (PlayerPointsAPI) api;
-                    registerEconomyType("coldbits", new PlayerPointsEconomyType(this,
-                            this.getConfig().getString("economy.coldbits.prefix", ""),
-                            this.getConfig().getString("economy.coldbits.suffix", " Bits"))
-                    );
-                    getLogger().info("ColdBits hook successfully!");
-                    pointsHooked = true;
-                } catch (Exception e) {
-                    //getLogger().severe("Failed to hook into PremiumPoints: " + e.getMessage());
-                }
+            if (plugin instanceof dev.padrewin.coldbits.ColdBits) {
+                dev.padrewin.coldbits.ColdBits coldBits =
+                        (dev.padrewin.coldbits.ColdBits) plugin;
+
+                coldBitsAPI = coldBits.getAPI();
+
+                registerEconomyType(
+                        "coldbits",
+                        new ColdBitsEconomyType(
+                                this,
+                                getConfig().getString("economy.coldbits.prefix", ""),
+                                getConfig().getString("economy.coldbits.suffix", " Bits")
+                        )
+                );
+
+                getLogger().info("ColdBits hook successfully!");
+                pointsHooked = true;
             }
         }
+
 
         if (!pointsHooked && Bukkit.getServer().getPluginManager().getPlugin("PlayerPoints") != null) {
             if (getEconomyType("playerpoints") == null) {
@@ -413,6 +420,9 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         return playerPointsAPI;
     }
 
+    public ColdBitsAPI getColdBitsAPI() {
+        return coldBitsAPI;
+    }
 
     public String getMessage(Message message) {
         return ChatColor.translateAlternateColorCodes('&', this.getConfig().getString("messages."

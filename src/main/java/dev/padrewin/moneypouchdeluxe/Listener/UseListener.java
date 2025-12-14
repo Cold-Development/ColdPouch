@@ -268,53 +268,35 @@ public class UseListener implements Listener {
         }
 
         public void pay() {
-            if (paid) throw new IllegalStateException("player already paid!"); // prevent me from myself
+            if (paid) throw new IllegalStateException("player already paid!");
             this.paid = true;
 
             opening.remove(player.getUniqueId());
 
-            boolean success = false;
             try {
-                // Verifică dacă economia este PlayerPoints
-                if (pouch.getEconomyType().getPrefix().equalsIgnoreCase("PlayerPoints")) {
-                    // Obține instanța PlayerPointsAPI
-                    PlayerPointsAPI playerPointsAPI = null;
-                    Plugin pluginInstance = Bukkit.getServer().getPluginManager().getPlugin("PlayerPoints");
+                pouch.getEconomyType().processPayment(player, payment);
 
-                    if (pluginInstance instanceof PlayerPoints) {
-                        playerPointsAPI = ((PlayerPoints) pluginInstance).getAPI();
-                    }
-
-                    if (playerPointsAPI != null) {
-                        playerPointsAPI.give(player.getUniqueId(), (int) payment); // Give points
-                        success = true;
-                    } else {
-                        plugin.getLogger().severe("PlayerPoints API is not available.");
-                    }
-                } else {
-                    pouch.getEconomyType().processPayment(player, payment);
-                    success = true;
+                if (player.isOnline()) {
+                    playSound(player, plugin.getConfig().getString("pouches.sound.endsound"));
+                    player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.PRIZE_MESSAGE)
+                            .replace("%prefix%", pouch.getEconomyType().getPrefix())
+                            .replace("%suffix%", pouch.getEconomyType().getSuffix())
+                            .replace("%prize%", NumberFormat.getInstance().format(payment)));
                 }
+
             } catch (Throwable t) {
                 if (plugin.getConfig().getBoolean("error-handling.log-failed-transactions", true)) {
-                    plugin.getLogger().log(Level.SEVERE, "Failed to process payment from pouch with ID '" + pouch.getId() + "' for player '" + player.getName()
-                            + "' of amount " + payment + " of economy " + pouch.getEconomyType().toString() + ": " + t.getMessage());
+                    plugin.getLogger().log(Level.SEVERE,
+                            "Failed to process payment from pouch '" + pouch.getId()
+                                    + "' for player '" + player.getName()
+                                    + "' amount " + payment, t);
                 }
+
                 if (player.isOnline()) {
                     if (plugin.getConfig().getBoolean("error-handling.refund-pouch", false)) {
                         player.getInventory().addItem(pouch.getItemStack());
                     }
                     player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.REWARD_ERROR)
-                            .replace("%prefix%", pouch.getEconomyType().getPrefix())
-                            .replace("%suffix%", pouch.getEconomyType().getSuffix())
-                            .replace("%prize%", NumberFormat.getInstance().format(payment)));
-                }
-                t.printStackTrace();
-            }
-            if (success) {
-                if (player.isOnline()) {
-                    playSound(player, plugin.getConfig().getString("pouches.sound.endsound"));
-                    player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.PRIZE_MESSAGE)
                             .replace("%prefix%", pouch.getEconomyType().getPrefix())
                             .replace("%suffix%", pouch.getEconomyType().getSuffix())
                             .replace("%prize%", NumberFormat.getInstance().format(payment)));

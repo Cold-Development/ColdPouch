@@ -6,7 +6,7 @@
 
     <groupId>dev.padrewin</groupId>
     <artifactId>MoneyPouchDeluxe</artifactId>
-    <version>1.4.5</version>
+    <version>1.4.6</version>
     <packaging>jar</packaging>
 
     <name>MoneyPouchDeluxe</name>
@@ -114,7 +114,7 @@
         <dependency>
             <groupId>dev.padrewin</groupId>
             <artifactId>coldbits</artifactId>
-            <version>1.0</version>
+            <version>1.0.0</version>
             <scope>provided</scope>
         </dependency>
 
@@ -135,7 +135,7 @@
         <dependency>
             <groupId>dev.padrewin</groupId>
             <artifactId>colddev</artifactId>
-            <version>1.4.8</version>
+            <version>1.5.0</version>
             <scope>compile</scope>
         </dependency>
 
@@ -149,7 +149,7 @@
         <dependency>
             <groupId>org.black_ixx</groupId>
             <artifactId>playerpoints</artifactId>
-            <version>3.2.7</version>
+            <version>3.3.3</version>
             <scope>provided</scope>
         </dependency>
 
