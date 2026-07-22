@@ -8,7 +8,6 @@ import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeBaseCommand;
 import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeShopCommand;
 import dev.padrewin.moneypouchdeluxe.EconomyType.*;
 import dev.padrewin.moneypouchdeluxe.Exception.HologramHandler;
-import dev.padrewin.moneypouchdeluxe.Listener.ServerLoadListener;
 import dev.padrewin.moneypouchdeluxe.Listener.UseListenerLatest;
 import dev.padrewin.moneypouchdeluxe.Gui.MenuController;
 import dev.padrewin.moneypouchdeluxe.ItemGetter.ItemGetter;
@@ -233,13 +232,11 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         Objects.requireNonNull(getServer().getPluginCommand("moneypouchshop")).setExecutor(new MoneyPouchDeluxeShopCommand(this));
         Objects.requireNonNull(getServer().getPluginCommand("moneypouchadmin")).setExecutor(new MoneyPouchDeluxeAdminCommand(this, hologramHandler));
 
-        super.getServer().getPluginManager().registerEvents(menuController, this);
-        Bukkit.getScheduler().runTask(this, this::reload);
+        getServer().getPluginManager().registerEvents(menuController, this);
 
-        setupPointsEconomy();
-
-        getServer().getPluginManager().registerEvents(new ServerLoadListener(this), this);
-        getServer().getScheduler().runTask(this, this::reload);
+        // Defer the configuration-dependent load until all plugins have
+        // completed enable(), so economy hooks can be discovered reliably.
+        Bukkit.getScheduler().runTask(this, (Runnable) this::reload);
 
         if (!getDataFolder().exists()) {
             getDataFolder().mkdirs();
